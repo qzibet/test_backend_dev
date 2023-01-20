@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        form {
+            width: 30%;
+        }
+        input[type=text] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+        .get_data {
+            width: 100%;
+        }
+        .text_area {
+            min-height: 40px;
+            border: black 1px solid;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+
+    <iframe name="dummyframe" id="dummyframe" style="display: none;"></iframe>
+    <form id="fetchbuttonsave" target="dummyframe">
+        <input type="text" id="saving-data" name="text1">
+        <button type="submit">Save</button>
+    </form>
+
+    <form id="fetchbuttonget" target="dummyframe">
+        {% csrf_token %}
+        <div class="get_data">
+            <div class="text_area" id="getting-data"></div>
+            <button type="submit">Get</button>
+        </div>
+    </form>
+    <script>
+        let response
+        const fetchDataBtnSave = document.querySelector('#fetchbuttonsave')
+        const fetchDataBtnGet = document.querySelector('#fetchbuttonget')
+
+        const result = document.querySelector('#result')
+        function getCookie(name) {
+            const matches = document.cookie.match(new RegExp(
+              "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ))
+            return matches ? decodeURIComponent(matches[1]) : undefined
+        }
+
+        async function sendData(someStr) {
+            const response = await fetch("{% url 'main-save' %}", {
+                method: 'POST',
+                mode: 'same-origin',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Frame-Options': 'SAMEORIGIN'
+                },
+                body: JSON.stringify({"string": someStr})
+            })
+        }
+        async function getData() {
+            const response = await fetch("{% url 'main-get' %}", {
+                method: 'GET',
+                mode: 'same-origin',
+                cache: 'no-cache',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Frame-Options': 'SAMEORIGIN'
+                },
+            })
+            return await response.json();
+        }
+        fetchDataBtnSave.addEventListener('click', ()=> {
+            const data = document.querySelector("#saving-data").value
+            sendData(data)
+        })
+        fetchDataBtnGet.addEventListener('click', ()=> {
+            getData().then(response => {
+                document.querySelector("#getting-data").innerText = response.string;
+            })
+        })
+    </script>
+</body>
+</html>
